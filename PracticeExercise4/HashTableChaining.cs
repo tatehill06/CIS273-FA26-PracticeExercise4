@@ -1,4 +1,6 @@
-﻿namespace PracticeExercise4;
+﻿using System.Data;
+
+namespace PracticeExercise4;
 
 public class HashTableChaining<K, V> : IHashTable<K, V>
 {
@@ -10,8 +12,12 @@ public class HashTableChaining<K, V> : IHashTable<K, V>
 
     public HashTableChaining()
     {
-        // init all entry lists
-        
+        // init all array and entry lists
+        entryListArray = new List<HashEntry<K, V>>[initialCapacity];
+        for(int i = 0; i < entryListArray.Length; i++)
+        {
+            entryListArray[i] = new List<HashEntry<K, V>>();
+        }
     }
 
     private int count;
@@ -21,60 +27,140 @@ public class HashTableChaining<K, V> : IHashTable<K, V>
 
     public bool Add(K key, V value)
     {
+        if(key is null)
+        {
+            throw new NoNullAllowedException();
+        }
         // resize if needed
-        
+        if(LoadFactor > MAX_LOAD_FACTOR)
+        {
+            Resize();
+        }
 
         // get the hash of the key
-        
+        int hash = Hash(key);
 
         // find the correct array index / element
-        
+        int index = hash % entryListArray.Length;
 
         // check if key is already present
-        
+        foreach(var entry in entryListArray[index])
+        {
+            if(entry.Key.Equals(key))
+            {
+                //update existing value
+                entry.Value = value;
+                return true;
+            }
+        }
 
         // add the new key/value pair to the correct list
-       
+        entryListArray[index].Add(new HashEntry<K, V>(key, value));
+        count++;
 
         return false;
     }
 
     public bool ContainsKey(K key)
     {
-        throw new NotImplementedException();
+        if(key == null)
+        {
+            return false;
+        }
+        int index = Hash(key) % entryListArray.Length;
+        foreach(var entry in entryListArray[index])
+        {
+            if (entry.Key.Equals(key))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public bool ContainsValue(V value)
     {
-        throw new NotImplementedException();
+        if(value == null)
+        {
+            return false;
+        }
+
+        foreach (var list in entryListArray)
+        {
+            foreach (var entry in list)
+            {
+                if (Equals(entry.Value, value))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public V Get(K key)
     {
         // hash the key
+        int hash = Hash(key);
         
-
         // find the correct index of the list
-        
+        int index = hash % entryListArray.Length;
 
         // find the entry with the given key (in the correct list)
-        
-        return default;
+        foreach(var entry in entryListArray[index])
+        {
+            if(entry.Key.Equals(key))
+            {
+                return entry.Value;
+            }
+        }
+        throw new KeyNotFoundException();
     }
 
     public List<K> GetKeys()
     {
-        return null;
+        var keys = new List<K>();
+
+        for(int i = 0; i < entryListArray.Length; i++)
+        {
+            foreach(var entry in entryListArray[i])
+            {
+                keys.Add(entry.Key);
+            }
+        }
+        return keys;
     }
 
     public List<V> GetValues()
     {
-        throw new NotImplementedException();
+        var values = new List<V>();
+
+        for(int i = 0; i < entryListArray.Length; i++)
+        {
+            foreach(var entry in entryListArray[i])
+            {
+                values.Add(entry.Value);
+            }
+        }
+        return values;
     }
 
     public bool Remove(K key)
     {
-        throw new NotImplementedException();
+        int hash = Hash(key);
+        
+        int index = hash % entryListArray.Length;
+
+        foreach(var entry in entryListArray[index])
+        {
+            if(entry.Key.Equals(key))
+            {
+                entryListArray[index].Remove(entry);
+                count--;
+                return true;
+            }
+        }
+        return false;
     }
 
 
